@@ -5,7 +5,7 @@ type Flags struct {
 	OutputFile     string
 	UseGitIgnore   bool
 	Languages      string
-	MaxTokens      int
+	MaxTokens      *int
 	Verbose        bool
 	ExcludePattern string
 	ExcludePaths   []string

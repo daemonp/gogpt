@@ -13,6 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func intPtr(i int) *int {
+	return &i
+}
+
 func TestNew(t *testing.T) {
 	// Create a temporary directory for valid tests
 	validDir, err := ioutil.TempDir("", "exporter_test_valid")
@@ -86,7 +90,7 @@ func TestExport(t *testing.T) {
 			name: "Default export",
 			flags: &types.Flags{
 				Languages: "go,markdown",
-				MaxTokens: 1000,
+				MaxTokens: intPtr(1000),
 			},
 			expectedError: false,
 			checkOutput: func(t *testing.T, output string) {
@@ -99,7 +103,7 @@ func TestExport(t *testing.T) {
 			name: "Export with small token limit",
 			flags: &types.Flags{
 				Languages: "go,markdown",
-				MaxTokens: 1,
+				MaxTokens: intPtr(1),
 			},
 			expectedError: false,
 			checkOutput: func(t *testing.T, output string) {

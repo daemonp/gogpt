@@ -19,7 +19,7 @@ import (
 type FileProcessor struct {
 	rootDir        string
 	languages      []string
-	maxTokens      int
+	maxTokens      *int
 	gitIgnore      *gitignore.GitIgnore
 	useGitIgnore   bool
 	customScanFunc func() ([]FileInfo, error)
@@ -106,9 +106,10 @@ func (fp *FileProcessor) processFile(path string) (FileInfo, error) {
 	}
 
 	tokenCount := tiktoken.CountTokens(string(content))
-	excluded := tokenCount > fp.maxTokens
+	excluded := false
 
-	if excluded {
+	if fp.maxTokens != nil && tokenCount > *fp.maxTokens {
+		excluded = true
 		log.Warn().Str("file", path).Int("tokens", tokenCount).Msg("File excluded due to size")
 		content = []byte(fmt.Sprintf("// File excluded due to size: %d tokens", tokenCount))
 	}

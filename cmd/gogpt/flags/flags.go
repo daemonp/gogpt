@@ -10,13 +10,14 @@ import (
 
 func ParseFlags() *types.Flags {
 	var excludePaths string
+	var maxTokens int
 
 	flags := &types.Flags{}
 
 	flag.StringVar(&flags.OutputFile, "f", "", "Output file path (default: stdout)")
 	flag.BoolVar(&flags.UseGitIgnore, "i", true, "Use .gitignore (default: true)")
 	flag.StringVar(&flags.Languages, "l", "", "Comma-separated list of languages to include (e.g., 'go,js,md')")
-	flag.IntVar(&flags.MaxTokens, "max-tokens", 1000, "Maximum number of tokens per file (default: 1000)")
+	flag.IntVar(&maxTokens, "max-tokens", 0, "Maximum number of tokens per file (default: no limit)")
 	flag.BoolVar(&flags.Verbose, "v", false, "Enable verbose logging")
 	flag.StringVar(&flags.ExcludePattern, "exclude", "", "Regex pattern to exclude lines (e.g., '^\\s*//')")
 	flag.StringVar(&excludePaths, "x", "", "Comma-separated list of paths to exclude")
@@ -25,6 +26,10 @@ func ParseFlags() *types.Flags {
 
 	if excludePaths != "" {
 		flags.ExcludePaths = strings.Split(excludePaths, ",")
+	}
+
+	if maxTokens > 0 {
+		flags.MaxTokens = &maxTokens
 	}
 
 	return flags

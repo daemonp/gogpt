@@ -90,7 +90,9 @@ func (e *Exporter) Export() error {
 	e.writer.Write("This document is a structured representation of the contents of the repository. It includes a list of files and their contents as per the following criteria:\n\n")
 	e.writer.Write(fmt.Sprintf("* Files are included based on the specified languages: %s.\n", e.flags.Languages))
 	e.writer.Write("* Files ignored by .gitignore are excluded.\n")
-	e.writer.Write(fmt.Sprintf("* Files exceeding the token limit (%d tokens) are noted but not included.\n", e.flags.MaxTokens))
+	if e.flags.MaxTokens != nil {
+		e.writer.Write(fmt.Sprintf("* Files exceeding the token limit (%d tokens) are noted but not included.\n", *e.flags.MaxTokens))
+	}
 	e.writer.Write(fmt.Sprintf("* Lines matching the exclude pattern '%s' are filtered out.\n", e.flags.ExcludePattern))
 	e.writer.Write("\n")
 

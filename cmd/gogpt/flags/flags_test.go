@@ -11,6 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func intPtr(i int) *int {
+	return &i
+}
+
 func TestParseFlags(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -24,7 +28,7 @@ func TestParseFlags(t *testing.T) {
 				Verbose:      false,
 				OutputFile:   "",
 				UseGitIgnore: true,
-				MaxTokens:    1000,
+				MaxTokens:    nil,
 			},
 		},
 		{
@@ -34,7 +38,7 @@ func TestParseFlags(t *testing.T) {
 				Verbose:      true,
 				OutputFile:   "",
 				UseGitIgnore: true,
-				MaxTokens:    1000,
+				MaxTokens:    nil,
 			},
 		},
 		{
@@ -44,7 +48,7 @@ func TestParseFlags(t *testing.T) {
 				Verbose:      false,
 				OutputFile:   "test.txt",
 				UseGitIgnore: true,
-				MaxTokens:    1000,
+				MaxTokens:    nil,
 			},
 		},
 		{
@@ -55,7 +59,7 @@ func TestParseFlags(t *testing.T) {
 				OutputFile:   "test.txt",
 				UseGitIgnore: false,
 				Languages:    "go,js",
-				MaxTokens:    500,
+				MaxTokens:    intPtr(500),
 			},
 		},
 	}
