@@ -3,11 +3,14 @@ package flags
 
 import (
 	"flag"
+	"strings"
 
 	"github.com/daemonp/gogpt/pkg/types"
 )
 
 func ParseFlags() *types.Flags {
+	var excludePaths string
+
 	flags := &types.Flags{}
 
 	flag.StringVar(&flags.OutputFile, "f", "", "Output file path (default: stdout)")
@@ -16,7 +19,13 @@ func ParseFlags() *types.Flags {
 	flag.IntVar(&flags.MaxTokens, "max-tokens", 1000, "Maximum number of tokens per file (default: 1000)")
 	flag.BoolVar(&flags.Verbose, "v", false, "Enable verbose logging")
 	flag.StringVar(&flags.ExcludePattern, "exclude", "", "Regex pattern to exclude lines (e.g., '^\\s*//')")
+	flag.StringVar(&excludePaths, "x", "", "Comma-separated list of paths to exclude")
+
 	flag.Parse()
+
+	if excludePaths != "" {
+		flags.ExcludePaths = strings.Split(excludePaths, ",")
+	}
 
 	return flags
 }

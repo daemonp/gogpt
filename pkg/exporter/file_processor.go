@@ -12,6 +12,7 @@ import (
 	"github.com/daemonp/gogpt/pkg/fileutils"
 	"github.com/daemonp/gogpt/pkg/gitignore"
 	"github.com/daemonp/gogpt/pkg/tiktoken"
+	"github.com/daemonp/gogpt/pkg/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -22,6 +23,7 @@ type FileProcessor struct {
 	gitIgnore      *gitignore.GitIgnore
 	useGitIgnore   bool
 	customScanFunc func() ([]FileInfo, error)
+	excludePaths   []string
 }
 
 type FileInfo struct {
@@ -31,13 +33,14 @@ type FileInfo struct {
 	Excluded   bool
 }
 
-func NewFileProcessor(rootDir, languages string, maxTokens int, gitIgnore *gitignore.GitIgnore, useGitIgnore bool) *FileProcessor {
+func NewFileProcessor(rootDir string, flags *types.Flags, gitIgnore *gitignore.GitIgnore) *FileProcessor {
 	return &FileProcessor{
 		rootDir:      rootDir,
-		languages:    strings.Split(languages, ","),
-		maxTokens:    maxTokens,
+		languages:    strings.Split(flags.Languages, ","),
+		maxTokens:    flags.MaxTokens,
 		gitIgnore:    gitIgnore,
-		useGitIgnore: useGitIgnore,
+		useGitIgnore: flags.UseGitIgnore,
+		excludePaths: flags.ExcludePaths,
 	}
 }
 
@@ -121,6 +124,13 @@ func (fp *FileProcessor) processFile(path string) (FileInfo, error) {
 func (fp *FileProcessor) shouldIgnoreFile(path string) bool {
 	if fp.useGitIgnore && fp.gitIgnore != nil && fp.gitIgnore.ShouldIgnore(path) {
 		return true
+	}
+
+	// Check if the path should be excluded
+	for _, excludePath := range fp.excludePaths {
+		if strings.Contains(path, excludePath) {
+			return true
+		}
 	}
 
 	ext := fileutils.GetFileExtension(path)

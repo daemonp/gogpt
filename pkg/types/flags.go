@@ -8,4 +8,5 @@ type Flags struct {
 	MaxTokens      int
 	Verbose        bool
 	ExcludePattern string
+	ExcludePaths   []string
 }
