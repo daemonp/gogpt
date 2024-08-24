@@ -15,4 +15,4 @@ jobs:
     uses: slsa-framework/slsa-github-generator/.github/workflows/builder_go_slsa3.yml@v1.4.0
     with:
       go-version: 1.23
-      architectures: linux/amd64
+      config-file: .slsa-goreleaser.yml
