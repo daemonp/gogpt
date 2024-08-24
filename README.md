@@ -12,7 +12,9 @@
 - Automatic Language Detection: When no specific languages are provided, automatically detect the programming languages used in the repository.
 - Human-Readable Logs: Utilize `Zerolog` to provide styled, human-readable logging, with default behavior tailored for both terminal and non-terminal outputs.
 
-## How to Build and Run
+## Installation
+
+### Option 1: Build from Source
 
 To build the `gogpt` CLI tool, navigate to the root of the project and run:
 
@@ -22,15 +24,30 @@ go build -o gogpt ./cmd/gogpt
 
 This will generate an executable named `gogpt` in the root directory.
 
-### Running the Tool
+### Option 2: Download Pre-built Binary
 
-After building the project, you can run the tool with various options:
+You can download the pre-built binary for Linux (amd64) using curl and make it executable with the following commands:
 
 ```bash
-./gogpt [options]
+sudo curl -L https://github.com/daemonp/gogpt/releases/download/v1/gogpt_linux_amd64 -o /usr/local/bin/gogpt
+sudo chmod 755 /usr/local/bin/gogpt
 ```
 
-#### Common Flags
+To verify the installation, run:
+
+```bash
+gogpt --version
+```
+
+## How to Run
+
+After installing `gogpt`, you can run the tool with various options:
+
+```bash
+gogpt [options]
+```
+
+### Common Flags
 
 - `-f`: Specify the output file path (default: stdout).
 - `-i`: Ignore files listed in `.gitignore`.
@@ -38,32 +55,28 @@ After building the project, you can run the tool with various options:
 - `--max-tokens`: Maximum number of tokens per file (default: 1000).
 - `-v`: Enable verbose logging.
 
-#### Example Usage
+### Example Usage
 
 1. Basic Usage
    ```bash
-   ./gogpt -l go,js -f output.txt
+   gogpt -l go,js -f output.txt
    ```
 
    ```bash
-   ./gogpt -l go,js | wl-copy
+   gogpt -l go,js | wl-copy
    ```
 
 2. Ignore Files in .gitignore:
    ```bash
-   ./gogpt -l go,js -i
+   gogpt -l go,js -i
    ```
 
 3. Automatic Language Detection:
    ```bash
-   ./gogpt
+   gogpt
    ```
 
 ## Logging
 
 By default, logs are output in a human-readable format to `stderr`. If the output is being piped, logs are adjusted for non-terminal environments.
-
-## Summary
-
-`gogpt` provides a flexible and efficient way to extract and format the contents of a Git repository for use in AI-related projects. It includes intelligent handling of file selection, large files, and repository-specific rules to ensure that the exported data is relevant and manageable.
 
