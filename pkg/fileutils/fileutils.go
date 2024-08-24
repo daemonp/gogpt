@@ -39,7 +39,7 @@ func GetFileExtension(path string) string {
 	if ext == "" {
 		return filepath.Base(path)
 	}
-	return strings.TrimPrefix(ext, ".") // Remove the leading dot
+	return strings.TrimPrefix(ext, ".")
 }
 
 func IsLanguageFile(lang, ext string) bool {

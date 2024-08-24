@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/daemonp/gogpt/internal/fileutils"
+	"github.com/daemonp/gogpt/pkg/fileutils"
 )
 
 func DetectLanguages(dir string) string {
