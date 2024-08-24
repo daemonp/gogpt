@@ -1,3 +1,5 @@
+// File: pkg/exporter/file_processor.go
+
 package exporter
 
 import (
@@ -14,11 +16,12 @@ import (
 )
 
 type FileProcessor struct {
-	rootDir      string
-	languages    []string
-	maxTokens    int
-	gitIgnore    *gitignore.GitIgnore
-	useGitIgnore bool
+	rootDir        string
+	languages      []string
+	maxTokens      int
+	gitIgnore      *gitignore.GitIgnore
+	useGitIgnore   bool
+	customScanFunc func() ([]FileInfo, error)
 }
 
 type FileInfo struct {
@@ -38,7 +41,15 @@ func NewFileProcessor(rootDir, languages string, maxTokens int, gitIgnore *gitig
 	}
 }
 
+func (fp *FileProcessor) SetCustomScanFunc(scanFunc func() ([]FileInfo, error)) {
+	fp.customScanFunc = scanFunc
+}
+
 func (fp *FileProcessor) ScanFiles() ([]FileInfo, error) {
+	if fp.customScanFunc != nil {
+		return fp.customScanFunc()
+	}
+
 	var files []FileInfo
 	var wg sync.WaitGroup
 	var mu sync.Mutex

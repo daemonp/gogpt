@@ -1,3 +1,5 @@
+// File: pkg/exporter/tree_generator.go
+
 package exporter
 
 import (
@@ -16,6 +18,10 @@ func NewTreeGenerator() *TreeGenerator {
 }
 
 func (tg *TreeGenerator) Generate(files []FileInfo) (string, error) {
+	if len(files) == 0 {
+		return "## Repository Structure\n\n(empty)", nil
+	}
+
 	var (
 		root *gtree.Node
 		node *gtree.Node

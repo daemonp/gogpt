@@ -1,13 +1,14 @@
+// File: cmd/gogpt/flags/flags.go
 package flags
 
 import (
 	"flag"
 
-	"github.com/daemonp/gogpt/pkg/exporter"
+	"github.com/daemonp/gogpt/pkg/types"
 )
 
-func ParseFlags() *exporter.Flags {
-	flags := &exporter.Flags{}
+func ParseFlags() *types.Flags {
+	flags := &types.Flags{}
 
 	flag.StringVar(&flags.OutputFile, "f", "", "Output file path (default: stdout)")
 	flag.BoolVar(&flags.UseGitIgnore, "i", true, "Use .gitignore (default: true)")

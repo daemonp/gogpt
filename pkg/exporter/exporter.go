@@ -1,3 +1,4 @@
+// File: pkg/exporter/exporter.go
 package exporter
 
 import (
@@ -7,12 +8,13 @@ import (
 
 	"github.com/daemonp/gogpt/pkg/gitignore"
 	"github.com/daemonp/gogpt/pkg/languagedetector"
+	"github.com/daemonp/gogpt/pkg/types"
 	"github.com/rs/zerolog/log"
 )
 
 type Exporter struct {
 	rootDir       string
-	flags         *Flags
+	flags         *types.Flags
 	gitIgnore     *gitignore.GitIgnore
 	output        io.Writer
 	processor     *FileProcessor
@@ -21,16 +23,12 @@ type Exporter struct {
 	contentFilter *ContentFilter
 }
 
-type Flags struct {
-	OutputFile     string
-	UseGitIgnore   bool
-	Languages      string
-	MaxTokens      int
-	Verbose        bool
-	ExcludePattern string
-}
+func New(rootDir string, flags *types.Flags) (*Exporter, error) {
+	// Check if the directory exists
+	if _, err := os.Stat(rootDir); os.IsNotExist(err) {
+		return nil, fmt.Errorf("directory does not exist: %s", rootDir)
+	}
 
-func New(rootDir string, flags *Flags) (*Exporter, error) {
 	output := os.Stdout
 	if flags.OutputFile != "" {
 		file, err := os.Create(flags.OutputFile)
@@ -77,6 +75,40 @@ func New(rootDir string, flags *Flags) (*Exporter, error) {
 	}, nil
 }
 
+func NewWithProcessor(rootDir string, flags *types.Flags, processor *FileProcessor) (*Exporter, error) {
+	output := os.Stdout
+	if flags.OutputFile != "" {
+		file, err := os.Create(flags.OutputFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create output file: %w", err)
+		}
+		output = file
+	}
+
+	contentFilter, err := NewContentFilter(flags.ExcludePattern)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create content filter: %w", err)
+	}
+
+	generator := NewTreeGenerator()
+	writer := NewWriter(output)
+
+	return &Exporter{
+		rootDir:       rootDir,
+		flags:         flags,
+		output:        output,
+		processor:     processor,
+		generator:     generator,
+		writer:        writer,
+		contentFilter: contentFilter,
+	}, nil
+}
+
+func NewForTesting(rootDir string, flags *types.Flags, scanFilesFunc func() ([]FileInfo, error)) (*Exporter, error) {
+	processor := NewFileProcessor(rootDir, flags.Languages, flags.MaxTokens, nil, flags.UseGitIgnore)
+	processor.SetCustomScanFunc(scanFilesFunc)
+	return NewWithProcessor(rootDir, flags, processor)
+}
 func (e *Exporter) Export() error {
 	files, err := e.processor.ScanFiles()
 	if err != nil {

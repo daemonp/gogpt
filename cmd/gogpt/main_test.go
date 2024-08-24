@@ -12,18 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-// MockExporter is a mock implementation of the Exporter
-type MockExporter struct {
-	mock.Mock
-}
-
-func (m *MockExporter) Export() error {
-	args := m.Called()
-	return args.Error(0)
-}
 
 func TestMain(t *testing.T) {
 	// Save original functions and restore them at the end of the test
@@ -40,40 +29,34 @@ func TestMain(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		setupMocks     func(*testing.T)
+		setupMocks     func()
 		expectedOutput string
 		expectedExit   int
 	}{
 		{
 			name: "Successful export",
-			setupMocks: func(t *testing.T) {
-				mockExporter := new(MockExporter)
-				mockExporter.On("Export").Return(nil)
-
+			setupMocks: func() {
 				osGetwd = func() (string, error) {
 					return "/test/dir", nil
 				}
-
 				exporterNew = func(rootDir string, flags *types.Flags) (*exporter.Exporter, error) {
 					return &exporter.Exporter{}, nil
 				}
-
 				parseFlagsFunc = func() *types.Flags {
-					return &types.Flags{Verbose: false}
+					return &types.Flags{Verbose: true}
 				}
 			},
-			expectedOutput: "",
+			expectedOutput: "Export completed successfully",
 			expectedExit:   0,
 		},
 		{
 			name: "Failed to get current working directory",
-			setupMocks: func(t *testing.T) {
+			setupMocks: func() {
 				osGetwd = func() (string, error) {
 					return "", errors.New("failed to get current working directory")
 				}
-
 				parseFlagsFunc = func() *types.Flags {
-					return &types.Flags{Verbose: false}
+					return &types.Flags{Verbose: true}
 				}
 			},
 			expectedOutput: "Failed to get current working directory",
@@ -81,17 +64,15 @@ func TestMain(t *testing.T) {
 		},
 		{
 			name: "Failed to create exporter",
-			setupMocks: func(t *testing.T) {
+			setupMocks: func() {
 				osGetwd = func() (string, error) {
 					return "/test/dir", nil
 				}
-
 				exporterNew = func(rootDir string, flags *types.Flags) (*exporter.Exporter, error) {
 					return nil, errors.New("failed to create exporter")
 				}
-
 				parseFlagsFunc = func() *types.Flags {
-					return &types.Flags{Verbose: false}
+					return &types.Flags{Verbose: true}
 				}
 			},
 			expectedOutput: "Failed to create exporter",
@@ -99,21 +80,15 @@ func TestMain(t *testing.T) {
 		},
 		{
 			name: "Failed to export repository contents",
-			setupMocks: func(t *testing.T) {
-				mockExporter := new(MockExporter)
-				mockExporter.On("Export").Return(errors.New("failed to export repository contents"))
-
+			setupMocks: func() {
 				osGetwd = func() (string, error) {
 					return "/test/dir", nil
 				}
-
 				exporterNew = func(rootDir string, flags *types.Flags) (*exporter.Exporter, error) {
-					// We're returning a mock that satisfies the Exporter interface
 					return &exporter.Exporter{}, nil
 				}
-
 				parseFlagsFunc = func() *types.Flags {
-					return &types.Flags{Verbose: false}
+					return &types.Flags{Verbose: true}
 				}
 			},
 			expectedOutput: "Failed to export repository contents",
@@ -125,27 +100,35 @@ func TestMain(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Capture log output
 			var buf bytes.Buffer
-			log.Logger = zerolog.New(&buf)
+			log.Logger = zerolog.New(&buf).With().Timestamp().Logger()
 
-			tt.setupMocks(t)
+			tt.setupMocks()
 
 			// Mock os.Exit
-			var got int
+			var exitCode int
 			osExit = func(code int) {
-				got = code
+				exitCode = code
+				panic("os.Exit called")
 			}
 
 			// Run main
-			main()
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						if r != "os.Exit called" {
+							t.Fatalf("Unexpected panic: %v", r)
+						}
+					}
+				}()
+				main()
+			}()
 
 			// Check exit code
-			assert.Equal(t, tt.expectedExit, got)
+			assert.Equal(t, tt.expectedExit, exitCode)
 
 			// Check log output
 			output := buf.String()
-			if tt.expectedOutput != "" {
-				assert.Contains(t, output, tt.expectedOutput)
-			}
+			assert.Contains(t, output, tt.expectedOutput)
 		})
 	}
 }

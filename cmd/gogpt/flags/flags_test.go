@@ -1,7 +1,9 @@
 // File: cmd/gogpt/flags/flags_test.go
+
 package flags
 
 import (
+	"flag"
 	"os"
 	"testing"
 
@@ -14,8 +16,6 @@ func TestParseFlags(t *testing.T) {
 		name          string
 		args          []string
 		expectedFlags *types.Flags
-		expectedPanic bool
-		panicMessage  string
 	}{
 		{
 			name: "Default flags",
@@ -62,17 +62,16 @@ func TestParseFlags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Reset flags before each test case
+			flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+
 			// Save original os.Args and restore it at the end of the test
 			oldArgs := os.Args
 			defer func() { os.Args = oldArgs }()
 			os.Args = tt.args
 
-			if tt.expectedPanic {
-				assert.PanicsWithValue(t, tt.panicMessage, func() { ParseFlags() })
-			} else {
-				flags := ParseFlags()
-				assert.Equal(t, tt.expectedFlags, flags)
-			}
+			flags := ParseFlags()
+			assert.Equal(t, tt.expectedFlags, flags)
 		})
 	}
 }
