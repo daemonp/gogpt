@@ -21,10 +21,15 @@ main: ./cmd/gogpt/main.go
 ldflags:
   - "-X main.Version={{ .Version }}"
 
-# Explicitly set the build matrix to only Linux x86_64
 builds:
-  - id: linux-amd64
+  - id: gogpt
+    binary: gogpt
+    main: ./cmd/gogpt/main.go
     goos:
       - linux
     goarch:
       - amd64
+    flags:
+      - -trimpath
+    ldflags:
+      - "-X main.Version={{ .Version }}"
