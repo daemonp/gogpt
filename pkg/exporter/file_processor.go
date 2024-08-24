@@ -135,8 +135,12 @@ func (fp *FileProcessor) shouldIgnoreFile(path string) bool {
 
 func (fp *FileProcessor) includeSpecialFiles(files []FileInfo) []FileInfo {
 	specialFiles := []string{
-		"README.md",
 		".gitignore",
+	}
+
+	// Only include README.md if markdown is not in the selected languages
+	if !fp.isLanguageIncluded("markdown") {
+		specialFiles = append(specialFiles, "README.md")
 	}
 
 	for _, specialFile := range specialFiles {
@@ -158,4 +162,13 @@ func (fp *FileProcessor) includeSpecialFiles(files []FileInfo) []FileInfo {
 	}
 
 	return files
+}
+
+func (fp *FileProcessor) isLanguageIncluded(lang string) bool {
+	for _, l := range fp.languages {
+		if strings.TrimSpace(strings.ToLower(l)) == lang {
+			return true
+		}
+	}
+	return false
 }
