@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/daemonp/gogpt/pkg/gitignore"
+	"github.com/daemonp/gogpt/pkg/languagedetector"
 	"github.com/daemonp/gogpt/pkg/types"
 	"github.com/rs/zerolog/log"
 )
@@ -37,6 +38,13 @@ func New(rootDir string, flags *types.Flags) (*Exporter, error) {
 		if err != nil {
 			log.Warn().Err(err).Msg("Failed to parse .gitignore files, continuing without gitignore")
 		}
+	}
+
+	// If no languages are specified, detect them automatically
+	if flags.Languages == "" {
+		detectedLangs := languagedetector.DetectLanguages(absRootDir)
+		flags.Languages = detectedLangs
+		log.Info().Str("languages", flags.Languages).Msg("Detected languages")
 	}
 
 	contentFilter, err := NewContentFilter(flags.ExcludePattern)
@@ -88,9 +96,20 @@ func (e *Exporter) Export() error {
 
 	e.writer.Write(treeStructure)
 
+	var totalSize int64
+	var totalTokens int
+
 	for _, file := range files {
 		if !file.Excluded {
 			file.Content = e.contentFilter.Filter(file.Content)
+		}
+
+		fileSize := int64(len(file.Content))
+		totalSize += fileSize
+		totalTokens += file.TokenCount
+
+		if e.flags.Verbose {
+			logFileInfo(file.Path, fileSize, file.TokenCount)
 		}
 	}
 
@@ -98,5 +117,20 @@ func (e *Exporter) Export() error {
 		return fmt.Errorf("failed to write file contents: %w", err)
 	}
 
+	// Log summary
+	log.Info().
+		Float64("total_size_kb", float64(totalSize)/1024.0).
+		Int("total_tokens", totalTokens).
+		Msg("Export completed")
+
 	return nil
+}
+
+func logFileInfo(path string, sizeInBytes int64, tokenCount int) {
+	sizeInKB := float64(sizeInBytes) / 1024.0
+	log.Debug().
+		Str("file", path).
+		Float64("size_kb", sizeInKB).
+		Int("tokens", tokenCount).
+		Msg("File processed")
 }
