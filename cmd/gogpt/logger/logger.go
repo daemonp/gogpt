@@ -1,4 +1,4 @@
-package main
+package logger
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func setupLogger(verbose bool) {
+func SetupLogger(verbose bool) {
 	if verbose {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	} else {
@@ -25,4 +25,13 @@ func setupLogger(verbose bool) {
 func isTerminal() bool {
 	fileInfo, _ := os.Stdout.Stat()
 	return (fileInfo.Mode() & os.ModeCharDevice) != 0
+}
+
+func LogFileInfo(path string, sizeInBytes int64, tokenCount int) {
+	sizeInKB := float64(sizeInBytes) / 1024.0
+	log.Info().
+		Str("file", path).
+		Float64("size_kb", sizeInKB).
+		Int("tokens", tokenCount).
+		Msg("File processed")
 }

@@ -1,5 +1,3 @@
-// pkg/exporter/file_processor.go
-
 package exporter
 
 import (
@@ -16,10 +14,11 @@ import (
 )
 
 type FileProcessor struct {
-	rootDir   string
-	languages []string
-	maxTokens int
-	gitIgnore *gitignore.GitIgnore
+	rootDir      string
+	languages    []string
+	maxTokens    int
+	gitIgnore    *gitignore.GitIgnore
+	useGitIgnore bool
 }
 
 type FileInfo struct {
@@ -29,12 +28,13 @@ type FileInfo struct {
 	Excluded   bool
 }
 
-func NewFileProcessor(rootDir, languages string, maxTokens int, gitIgnore *gitignore.GitIgnore) *FileProcessor {
+func NewFileProcessor(rootDir, languages string, maxTokens int, gitIgnore *gitignore.GitIgnore, useGitIgnore bool) *FileProcessor {
 	return &FileProcessor{
-		rootDir:   rootDir,
-		languages: strings.Split(languages, ","),
-		maxTokens: maxTokens,
-		gitIgnore: gitIgnore,
+		rootDir:      rootDir,
+		languages:    strings.Split(languages, ","),
+		maxTokens:    maxTokens,
+		gitIgnore:    gitIgnore,
+		useGitIgnore: useGitIgnore,
 	}
 }
 
@@ -56,9 +56,15 @@ func (fp *FileProcessor) ScanFiles() ([]FileInfo, error) {
 		go func() {
 			defer wg.Done()
 
-			fileInfo, err := fp.processFile(path)
+			relPath, err := filepath.Rel(fp.rootDir, path)
 			if err != nil {
-				log.Error().Err(err).Str("file", path).Msg("Failed to process file")
+				log.Error().Err(err).Str("file", path).Msg("Failed to get relative path")
+				return
+			}
+
+			fileInfo, err := fp.processFile(relPath)
+			if err != nil {
+				log.Error().Err(err).Str("file", relPath).Msg("Failed to process file")
 				return
 			}
 
@@ -80,7 +86,7 @@ func (fp *FileProcessor) ScanFiles() ([]FileInfo, error) {
 }
 
 func (fp *FileProcessor) processFile(path string) (FileInfo, error) {
-	content, err := os.ReadFile(path)
+	content, err := os.ReadFile(filepath.Join(fp.rootDir, path))
 	if err != nil {
 		return FileInfo{}, fmt.Errorf("failed to read file: %w", err)
 	}
@@ -102,7 +108,7 @@ func (fp *FileProcessor) processFile(path string) (FileInfo, error) {
 }
 
 func (fp *FileProcessor) shouldIgnoreFile(path string) bool {
-	if fp.gitIgnore != nil && fp.gitIgnore.ShouldIgnore(path) {
+	if fp.useGitIgnore && fp.gitIgnore != nil && fp.gitIgnore.ShouldIgnore(path) {
 		return true
 	}
 
@@ -118,15 +124,22 @@ func (fp *FileProcessor) shouldIgnoreFile(path string) bool {
 
 func (fp *FileProcessor) includeSpecialFiles(files []FileInfo) []FileInfo {
 	specialFiles := []string{
-		filepath.Join(fp.rootDir, "README.md"),
-		filepath.Join(fp.rootDir, ".gitignore"),
+		"README.md",
+		".gitignore",
 	}
 
 	for _, specialFile := range specialFiles {
-		if _, err := os.Stat(specialFile); err == nil {
-			fileInfo, err := fp.processFile(specialFile)
+		filePath := filepath.Join(fp.rootDir, specialFile)
+		if _, err := os.Stat(filePath); err == nil {
+			relPath, err := filepath.Rel(fp.rootDir, filePath)
 			if err != nil {
-				log.Error().Err(err).Str("file", specialFile).Msg("Failed to process special file")
+				log.Error().Err(err).Str("file", filePath).Msg("Failed to get relative path for special file")
+				continue
+			}
+
+			fileInfo, err := fp.processFile(relPath)
+			if err != nil {
+				log.Error().Err(err).Str("file", relPath).Msg("Failed to process special file")
 				continue
 			}
 			files = append(files, fileInfo)

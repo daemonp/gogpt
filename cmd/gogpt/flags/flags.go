@@ -1,4 +1,4 @@
-package main
+package flags
 
 import (
 	"flag"
@@ -6,14 +6,15 @@ import (
 	"github.com/daemonp/gogpt/pkg/exporter"
 )
 
-func parseFlags() *exporter.Flags {
+func ParseFlags() *exporter.Flags {
 	flags := &exporter.Flags{}
 
 	flag.StringVar(&flags.OutputFile, "f", "", "Output file path (default: stdout)")
-	flag.BoolVar(&flags.IgnoreGitIgnore, "i", false, "Ignore files specified in .gitignore")
+	flag.BoolVar(&flags.UseGitIgnore, "i", true, "Use .gitignore (default: true)")
 	flag.StringVar(&flags.Languages, "l", "", "Comma-separated list of languages to include (e.g., 'go,js,md')")
 	flag.IntVar(&flags.MaxTokens, "max-tokens", 1000, "Maximum number of tokens per file (default: 1000)")
 	flag.BoolVar(&flags.Verbose, "v", false, "Enable verbose logging")
+	flag.StringVar(&flags.ExcludePattern, "exclude", "", "Regex pattern to exclude lines (e.g., '^\\s*//')")
 	flag.Parse()
 
 	return flags

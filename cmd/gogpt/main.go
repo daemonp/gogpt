@@ -3,13 +3,15 @@ package main
 import (
 	"os"
 
+	"github.com/daemonp/gogpt/cmd/gogpt/flags"
+	"github.com/daemonp/gogpt/cmd/gogpt/logger"
 	"github.com/daemonp/gogpt/pkg/exporter"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	flags := parseFlags()
-	setupLogger(flags.Verbose)
+	flags := flags.ParseFlags()
+	logger.SetupLogger(flags.Verbose)
 
 	dir, err := os.Getwd()
 	if err != nil {
@@ -24,6 +26,4 @@ func main() {
 	if err := exp.Export(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to export repository contents")
 	}
-
-	log.Info().Msg("Export completed successfully")
 }
