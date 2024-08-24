@@ -1,0 +1,30 @@
+version: 1
+env:
+  - GO111MODULE=on
+  - CGO_ENABLED=0
+
+flags:
+  - -trimpath
+
+goos:
+  - linux
+
+goarch:
+  - amd64
+
+binary: >-
+  {{ .ProjectName }}_
+  {{- trimprefix .Os "darwin" | trimprefix "linux" | trimprefix "windows" }}_
+  {{- .Arch }}
+
+main: ./cmd/gogpt/main.go
+ldflags:
+  - "-X main.Version={{ .Version }}"
+
+# Explicitly set the build matrix to only Linux x86_64
+builds:
+  - id: linux-amd64
+    goos:
+      - linux
+    goarch:
+      - amd64
