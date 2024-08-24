@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-// maps languages to their file extensions
 var LanguageExtensions = map[string][]string{
 	"go":         {".go"},
 	"js":         {".js", ".jsx"},
@@ -30,20 +29,19 @@ var LanguageExtensions = map[string][]string{
 	"sql":        {".sql"},
 	"shell":      {".sh", ".bash"},
 	"powershell": {".ps1"},
-	"dockerfile": {"Dockerfile"},
-	"makefile":   {"Makefile"},
+	"docker":     {"Dockerfile"},
+	"make":       {"Makefile"},
+	"config":     {".cfg", ".conf", ".ini"},
 }
 
-// GetFileExtension returns the file extension without the leading dot
 func GetFileExtension(path string) string {
 	ext := filepath.Ext(path)
 	if ext == "" {
 		return filepath.Base(path)
 	}
-	return ext[1:] // Remove the leading dot
+	return strings.TrimPrefix(ext, ".") // Remove the leading dot
 }
 
-// IsLanguageFile checks if the given file extension belongs to the specified language
 func IsLanguageFile(lang, ext string) bool {
 	extensions, ok := LanguageExtensions[strings.ToLower(lang)]
 	if !ok {

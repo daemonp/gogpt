@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"os"
-	"strconv"
 
 	"github.com/daemonp/gogpt/internal/exporter"
 	"github.com/daemonp/gogpt/internal/languagedetector"
@@ -16,16 +15,16 @@ func main() {
 	outputFile := flag.String("f", "", "Output file path (default: stdout)")
 	ignoreGitIgnore := flag.Bool("i", false, "Ignore files specified in .gitignore")
 	languages := flag.String("l", "", "Comma-separated list of languages to include (e.g., 'go,js,md')")
-	maxTokensStr := flag.String("t", "1000", "Maximum number of tokens per file")
+	maxTokens := flag.Int("max-tokens", 1000, "Maximum number of tokens per file (default: 1000)")
+	verbose := flag.Bool("v", false, "Enable verbose logging")
 	flag.Parse()
 
-	// Convert maxTokens to an integer
-	maxTokens, err := strconv.Atoi(*maxTokensStr)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Invalid value for max tokens")
-	}
-
 	// Configure zerolog
+	if *verbose {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
 	output := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: zerolog.TimeFormatUnix}
 	log.Logger = zerolog.New(output).With().Timestamp().Logger()
 
@@ -47,8 +46,8 @@ func main() {
 		log.Info().Str("languages", *languages).Msg("Detected languages")
 	}
 
-	// Create exporter with maxTokens
-	exp, err := exporter.New(dir, *outputFile, *ignoreGitIgnore, *languages, maxTokens)
+	// Create exporter
+	exp, err := exporter.New(dir, *outputFile, *ignoreGitIgnore, *languages, *maxTokens)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to create exporter")
 	}
